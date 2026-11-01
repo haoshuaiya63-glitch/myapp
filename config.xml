@@ -1,48 +1,23 @@
-name: Build Android APK
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.yourname.myapp" version="1.0.0"
+  xmlns="http://www.w3.org/ns/widgets"
+  xmlns:android="http://schemas.android.com/apk/res/android">
 
-on:
-  push:
-    branches: [main]
+  <name>MyApp</name>
+  <description>My Cordova App</description>
+  <author>Your Name</author>
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  <content src="index.html" />
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '22'
+  <platform name="android">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+  </platform>
 
-      - uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+  <allow-navigation href="*" />
+  <allow-intent href="*" />
+  <access origin="*" />
 
-      - name: Install Cordova
-        run: npm install -g cordova
-
-      - name: Create Cordova project
-        run: cordova create cordova-app com.yourname.myapp MyApp
-
-      - name: Copy www files
-        run: |
-          rm -rf cordova-app/www/*
-          cp -r www/* cordova-app/www/
-
-      - name: Copy config.xml
-        run: cp config.xml cordova-app/config.xml
-
-      - name: Add Android platform
-        working-directory: cordova-app
-        run: cordova platform add android
-
-      - name: Build Debug APK
-        working-directory: cordova-app
-        run: cordova build android --debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: cordova-app/platforms/android/app/build/outputs/apk/debug/
+</widget>
