@@ -21,7 +21,7 @@
   <button id="btn-start" onclick="startRec()">开始录音</button>
   <button id="btn-stop" class="stop" onclick="stopRec()" disabled>停止</button>
   <button id="btn-play" onclick="playRec()" disabled>播放</button>
-  <div class="status" id="rec-status">等待录音权限...</div>
+  <div class="status" id="rec-status">等待初始化...</div>
 </div>
 
 <div class="card">
@@ -29,86 +29,102 @@
   <button onclick="getLocation()">获取位置</button>
   <button onclick="watchLocation()" id="btn-watch">持续追踪</button>
   <button class="stop" onclick="stopWatch()" id="btn-stop-watch" disabled>停止追踪</button>
-  <div class="status" id="geo-status">等待定位权限...</div>
+  <div class="status" id="geo-status">等待初始化...</div>
 </div>
 
 <script src="cordova.js"></script>
 <script>
-  let mediaRec = null, audioChunks = [], audioURL = null, watchId = null;
+  let mediaFile = null, watchId = null;
+  const recFile = 'cdvfile://localhost/temporary/recording.mp3';
 
   document.addEventListener('deviceready', function() {
-    var permissions = cordova.plugins.permissions;
-    permissions.requestPermissions([
-      permissions.RECORD_AUDIO,
-      permissions.ACCESS_FINE_LOCATION,
-      permissions.ACCESS_COARSE_LOCATION
+    var p = cordova.plugins.permissions;
+
+    // 请求所有权限
+    p.requestPermissions([
+      p.RECORD_AUDIO,
+      p.ACCESS_FINE_LOCATION,
+      p.ACCESS_COARSE_LOCATION
     ], function(status) {
       if (status.hasPermission) {
-        document.getElementById('rec-status').textContent = '录音权限已获取，可以开始录音';
-        document.getElementById('geo-status').textContent = '定位权限已获取，可以获取位置';
+        document.getElementById('rec-status').textContent = '权限已获取，可以开始录音';
+        document.getElementById('geo-status').textContent = '权限已获取，可以获取位置';
       } else {
-        document.getElementById('rec-status').textContent = '权限被拒绝';
-        document.getElementById('geo-status').textContent = '权限被拒绝';
+        document.getElementById('rec-status').textContent = '部分权限被拒绝，请去设置里开启';
+        document.getElementById('geo-status').textContent = '部分权限被拒绝，请去设置里开启';
       }
     }, function() {
       document.getElementById('rec-status').textContent = '请求权限失败';
       document.getElementById('geo-status').textContent = '请求权限失败';
     });
+
   }, false);
 
-  async function startRec() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunks = [];
-      mediaRec = new MediaRecorder(stream);
-      mediaRec.ondataavailable = e => audioChunks.push(e.data);
-      mediaRec.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        audioURL = URL.createObjectURL(blob);
-        document.getElementById('btn-play').disabled = false;
+  function startRec() {
+    mediaFile = new Media(recFile,
+      function() {
         document.getElementById('rec-status').textContent = '录音完成，点播放收听';
-      };
-      mediaRec.start();
-      document.getElementById('btn-start').disabled = true;
-      document.getElementById('btn-stop').disabled = false;
-      document.getElementById('rec-status').textContent = '录音中...';
-    } catch(e) {
-      document.getElementById('rec-status').textContent = '错误：' + e.message;
-    }
+        document.getElementById('btn-play').disabled = false;
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-stop').disabled = true;
+      },
+      function(err) {
+        document.getElementById('rec-status').textContent = '录音错误：' + err.message;
+      }
+    );
+    mediaFile.startRecord();
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-stop').disabled = false;
+    document.getElementById('rec-status').textContent = '录音中...';
   }
 
   function stopRec() {
-    if (mediaRec) { mediaRec.stop(); mediaRec.stream.getTracks().forEach(t => t.stop()); }
-    document.getElementById('btn-start').disabled = false;
-    document.getElementById('btn-stop').disabled = true;
+    if (mediaFile) mediaFile.stopRecord();
   }
 
   function playRec() {
-    if (audioURL) new Audio(audioURL).play();
+    var player = new Media(recFile,
+      function() { document.getElementById('rec-status').textContent = '播放完成'; },
+      function(err) { document.getElementById('rec-status').textContent = '播放错误：' + err.message; }
+    );
+    player.play();
+    document.getElementById('rec-status').textContent = '播放中...';
   }
 
   function getLocation() {
     document.getElementById('geo-status').textContent = '获取中...';
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      document.getElementById('geo-status').textContent =
-        `纬度：${latitude.toFixed(6)}\n经度：${longitude.toFixed(6)}\n精度：±${Math.round(accuracy)} 米`;
-    }, err => {
-      document.getElementById('geo-status').textContent = '失败：' + err.message;
-    }, { enableHighAccuracy: true });
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        const { latitude, longitude, accuracy } = pos.coords;
+        document.getElementById('geo-status').textContent =
+          '纬度：' + latitude.toFixed(6) +
+          '\n经度：' + longitude.toFixed(6) +
+          '\n精度：±' + Math.round(accuracy) + ' 米';
+      },
+      function(err) {
+        document.getElementById('geo-status').textContent = '失败：' + err.message;
+      },
+      { enableHighAccuracy: true }
+    );
   }
 
   function watchLocation() {
     document.getElementById('btn-watch').disabled = true;
     document.getElementById('btn-stop-watch').disabled = false;
-    watchId = navigator.geolocation.watchPosition(pos => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      const t = new Date().toLocaleTimeString();
-      document.getElementById('geo-status').textContent =
-        `[${t}] 纬度：${latitude.toFixed(6)}\n经度：${longitude.toFixed(6)}\n精度：±${Math.round(accuracy)} 米`;
-    }, err => {
-      document.getElementById('geo-status').textContent = '失败：' + err.message;
-    }, { enableHighAccuracy: true });
+    watchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const t = new Date().toLocaleTimeString();
+        document.getElementById('geo-status').textContent =
+          '[' + t + '] 纬度：' + latitude.toFixed(6) +
+          '\n经度：' + longitude.toFixed(6) +
+          '\n精度：±' + Math.round(accuracy) + ' 米';
+      },
+      function(err) {
+        document.getElementById('geo-status').textContent = '失败：' + err.message;
+      },
+      { enableHighAccuracy: true }
+    );
   }
 
   function stopWatch() {
