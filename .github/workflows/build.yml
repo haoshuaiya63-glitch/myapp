@@ -28,6 +28,9 @@ jobs:
       - name: Add Android platform
         run: cordova platform add android
 
+      - name: Add permissions plugin
+        run: cordova plugin add cordova-plugin-android-permissions
+
       - name: Build Debug APK
         run: cordova build android --debug
 
