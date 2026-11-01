@@ -22,14 +22,27 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
+      - name: Create Cordova project
+        run: cordova create cordova-app com.yourname.myapp MyApp
+
+      - name: Copy www files
+        run: |
+          rm -rf cordova-app/www/*
+          cp -r www/* cordova-app/www/ 2>/dev/null || cp index.html cordova-app/www/
+
+      - name: Copy config.xml
+        run: cp config.xml cordova-app/config.xml
+
       - name: Add Android platform
+        working-directory: cordova-app
         run: cordova platform add android
 
       - name: Build Debug APK
+        working-directory: cordova-app
         run: cordova build android --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: platforms/android/app/build/outputs/apk/debug/*.apk
+          path: cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk
