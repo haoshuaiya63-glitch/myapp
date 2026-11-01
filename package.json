@@ -1,0 +1,12 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "cordova-android": "^14.0.0"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ]
+  }
+}
