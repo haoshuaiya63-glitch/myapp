@@ -28,7 +28,7 @@ jobs:
       - name: Copy www files
         run: |
           rm -rf cordova-app/www/*
-          cp -r www/* cordova-app/www/ 2>/dev/null || cp index.html cordova-app/www/
+          cp index.html cordova-app/www/
 
       - name: Copy config.xml
         run: cp config.xml cordova-app/config.xml
@@ -41,8 +41,11 @@ jobs:
         working-directory: cordova-app
         run: cordova build android --debug
 
+      - name: List APK files
+        run: find cordova-app/platforms/android -name "*.apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk
+          path: cordova-app/platforms/android/app/build/outputs/apk/debug/
