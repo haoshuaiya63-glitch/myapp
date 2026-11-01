@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.yourname.testapp" version="1.0.0"
+  xmlns="http://www.w3.org/ns/widgets"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <name>TestApp</name>
+  <description>录音与定位测试</description>
+  <author>Your Name</author>
+
+  <content src="index.html" />
+
+  <platform name="android">
+    <!-- 定位权限 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- 录音权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+  </platform>
+
+  <allow-navigation href="*" />
+  <allow-intent href="*" />
+  <access origin="*" />
+</widget>
